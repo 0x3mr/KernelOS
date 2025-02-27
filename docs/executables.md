@@ -52,3 +52,9 @@ Inspect the imagine file:
 ```
 qemu-system-x86_64 -cdrom cdrom.iso
 ```
+
+# How can I see the output?
+
+```
+vncviewer 127.0.0.1:5900
+```
