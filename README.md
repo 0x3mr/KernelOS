@@ -11,6 +11,9 @@ A simple operating system.
 
 - https://people.kth.se/~johanmon/ose/assignments/boot.pdf
 
+- https://people.kth.se/~johanmon/ose/assignments/stack.pdf
+- https://people.kth.se/~johanmon/ose/assignments/fork.pdf
+
 ## Project Structure
 
 ```
