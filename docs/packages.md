@@ -5,3 +5,4 @@ Specifically for Arch Linux users
 
 `sudo pacman -S grub xorriso mtools`
 `yay -S cdrtools`
+`sudo pacman -S tigervnc`
