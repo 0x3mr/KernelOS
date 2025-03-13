@@ -22,4 +22,4 @@ int main(){
     }
     return 0;
 }
-/*this is the same as our quiz 2 (more or less)*/
+/*this is the same as our quiz 2 (more or less) */
