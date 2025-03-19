@@ -9,7 +9,11 @@ int main() {
     int pid = fork();
 
     if (pid == 0) {
-              //these are flags (statements on the status to open this file with)
+              /*these are flags (statements on the status to open this file with)
+                O_RDWR   Open file for both reading and writing.
+                O_CREAT  Create file if it does not exist.
+                S_IRUSR  Grant read permission to the file owner. 
+                S_IWUSR  Grant write permission to the file owner.*/
         int fd = open("quotes.txt", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR); 
         if (fd == -1) {
             perror("open");
@@ -29,7 +33,7 @@ int main() {
     return 0;
 }
 /* inside the file descriptor table, the first entry will be our table entry (fd)
-   then we will use dup2 (line 19) to copy the entry to position (1) -> is the location of standard output
+   then we will use dup2 (line 23) to copy the entry to position (1) -> is the location of standard output
    then we will close the (fd) entry as we will not use it anymore since we already cloned it
    now we will call execlp. this will turn the process into 'boba'
    the 'boba' program knows nothing of what is going on.
