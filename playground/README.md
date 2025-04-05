@@ -8,7 +8,7 @@ Start the process in the background while the program is suspended waiting for i
 
 cat /proc/{PROCESS_IDENTIFIER}/maps
 
-Example: cat/proc/2708/maps
+Example: cat /proc/2708/maps
 
 ---
 
