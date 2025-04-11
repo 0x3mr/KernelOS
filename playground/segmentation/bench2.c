@@ -110,9 +110,9 @@ void bench1() {
     check();
 }
 
-// Let's see if we can
-// find room for a small segment in between two segments. We will first create
-// three arrays, delete the middle one and then create a new array
+/* Let's see if we can
+   find room for a small segment in between two segments. We will first create
+   three arrays, delete the middle one and then create a new array */
 void bench2() {
     array *a = create(20);
     array *b = create(30);

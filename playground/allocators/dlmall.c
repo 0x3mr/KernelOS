@@ -8,62 +8,62 @@
 
 #define TRUE 1
 #define FALSE 0
-#define HEAD (sizeof(struct head))
+#define HEAD (sizeof(head))
 #define MIN(size) (((size) > (8)) ? (size) : (8))
 #define LIMIT(size) (MIN(0) + HEAD + size)
-#define MAGIC(memory) ((struct head *)memory - 1)
-#define HIDE(block) (void *)((struct head *)block + 1)
+#define MAGIC(memory) ((head *)memory - 1)
+#define HIDE(block) (void *)((head *)block + 1)
 #define ALIGN 8
-#define ARENA (64 * 1024)
+#define ARENA (64 * 1024)   //64KB
 
-struct head {
+typedef struct head {
     uint16_t bfree;  // 2 bytes, the status of block before
     uint16_t bsize;  // 2 bytes, the size of block before
     uint16_t free;   // 2 bytes, the status of the block
     uint16_t size;   // 2 bytes, the size (max 2^16 i.e. 64 Ki byte)
     struct head *next; // 8 bytes pointer
     struct head *prev; // 8 bytes pointer
-};
+}head;
 
-struct head *arena = NULL;
-struct head *flist = NULL;
+head *arena = NULL;
+head *flist = NULL;
 
-// Find the block after the given block
-struct head *after(struct head *block) {
-    return (struct head *)((char *)block + block->size + HEAD);
+//find the block after the given block
+head *after(head *block) {
+    return (head *)((char *)block + block->size + HEAD);
 }
 
-// Find the block before the given block
-struct head *before(struct head *block) {
-    return (struct head *)((char *)block - block->bsize - HEAD);
+//find the block before the given block (find previous)
+head *before(head *block) {
+    return (head *)((char *)block - block->bsize - HEAD);
 }
 
-// Split a block into two, returning the second part
-struct head *split(struct head *block, int size) {
+//split a block into two, returning the second part
+head *split(head *block, int size) {
     int rsize = block->size - size - HEAD;
     block->size = size;
     
-    struct head *splt = after(block);
+    head *splt = after(block);
     splt->bsize = size;
     splt->bfree = block->free;
     splt->size = rsize;
     splt->free = TRUE;
     
-    struct head *aft = after(splt);
+    head *aft = after(splt);
     aft->bsize = rsize;
     
     return splt;
 }
 
-// Create a new block using mmap
-struct head *new() {
+//create a new block using mmap
+head *new() {
     if (arena != NULL) {
         printf("one arena already allocated\n");
         return NULL;
     }
     
     // using mmap, but could have used sbrk
-    struct head *new = mmap(NULL, ARENA,
+    head *new = mmap(NULL, ARENA,
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
@@ -72,28 +72,28 @@ struct head *new() {
         return NULL;
     }
     
-    /* make room for head and dummy */
+    // make room for head and dummy
     uint16_t size = ARENA - 2*HEAD;
     new->bfree = FALSE;
     new->bsize = 0;
     new->free = TRUE;
     new->size = size;
     
-    struct head *sentinel = after(new);
-    /* only touch the status fields */
+    head *sentinel = after(new);
+    // only touch the status fields
     sentinel->bfree = TRUE;
     sentinel->bsize = size;
     sentinel->free = FALSE;
     sentinel->size = 0;
     
-    /* this is the only arena we have */
-    arena = (struct head *)new;
+    // this is the only arena we have
+    arena = (head *)new;
     
     return new;
 }
 
-// Detach a block from the free list
-void detach(struct head *block) {
+//detach a block from the free list
+void detach(head *block) {
     if (block->next != NULL)
         block->next->prev = block->prev;
     
@@ -103,8 +103,8 @@ void detach(struct head *block) {
         flist = block->next;
 }
 
-// Insert a block into the free list
-void insert(struct head *block) {
+//insert some block into the free list
+void insert(head *block) {
     block->next = flist;
     block->prev = NULL;
     
@@ -114,12 +114,12 @@ void insert(struct head *block) {
     flist = block;
 }
 
-// Merge a block with adjacent free blocks
-struct head *merge(struct head *block) {
-    struct head *aft = after(block);
+//merge certain block with adjacent free blocks
+head *merge(head *block) {
+    head *aft = after(block);
     
     if (block->bfree) {
-        struct head *bef = before(block);
+        head *bef = before(block);
         detach(bef);
         
         bef->size = bef->size + block->size + HEAD;
@@ -138,7 +138,7 @@ struct head *merge(struct head *block) {
     return block;
 }
 
-// Adjust the requested size to be a multiple of ALIGN
+// Adjust the requested size to be a multiple of ALIGN macro
 int adjust(size_t request) {
     int size = MIN(request);
     int rem = size % ALIGN;
@@ -149,22 +149,22 @@ int adjust(size_t request) {
     return size;
 }
 
-// Find a block in the free list that can accommodate the requested size
-struct head *find(int size) {
+//find a block in the free list that can accommodate the requested size
+head *find(int size) {
     if (flist == NULL) {
-        struct head *block = new();
+        head *block = new();
         if (block == NULL)
             return NULL;
         insert(block);
     }
     
-    struct head *current = flist;
+    head *current = flist;
     while (current != NULL) {
         if (current->size >= size) {
             detach(current);
             
             if (current->size >= LIMIT(size)) {
-                struct head *remaining = split(current, size);
+                head *remaining = split(current, size);
                 insert(remaining);
             }
             
@@ -179,10 +179,10 @@ struct head *find(int size) {
     return NULL;
 }
 
-// Check if the free list and arena are in a consistent state
+//check if the free list and arena are in a consistent state
 void sanity() {
     // Check free list
-    struct head *current = flist;
+    head *current = flist;
     while (current != NULL) {
         if (current->free != TRUE) {
             printf("Error: block in free list not marked as free\n");
@@ -206,7 +206,7 @@ void sanity() {
     // Check all blocks in the arena
     if (arena != NULL) {
         current = arena;
-        struct head *next;
+        head *next;
         
         while (current->size != 0) {
             next = after(current);
@@ -220,14 +220,14 @@ void sanity() {
     }
 }
 
-// Allocate memory
+//allocate 
 void *dalloc(size_t request) {
     if (request <= 0) {
         return NULL;
     }
     
     int size = adjust(request);
-    struct head *taken = find(size);
+    head *taken = find(size);
     
     if (taken == NULL)
         return NULL;
@@ -235,11 +235,11 @@ void *dalloc(size_t request) {
         return HIDE(taken);
 }
 
-// Free memory
+//free
 void dfree(void *memory) {
     if (memory != NULL) {
-        struct head *block = MAGIC(memory);
-        struct head *aft = after(block);
+        head *block = MAGIC(memory);
+        head *aft = after(block);
         
         block->free = TRUE;
         aft->bfree = TRUE;
